@@ -17,9 +17,9 @@ class rag:
             low_cpu_mem_usage=True
         ).to(self.device)
 
-        self.db = Chroma()
         self.embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-    
+        self.db = Chroma(persist_directory="./.chroma_db", embedding_function=self.embedding_function)
+
     
     def store_data(self, data):
         loader = PyPDFLoader("introduction-to-quantum-mechanics-david-j-darrell--annas-archive--libgenrs-nf-2695391.pdf")
@@ -58,6 +58,7 @@ class rag:
         )
 
         response = outputs[0][input_ids.shape[-1]:]
+        
         return self.tokenizer.decode(response, skip_special_tokens=True)
     
     def answer_without_data(self, question):
@@ -65,7 +66,6 @@ class rag:
         return ans
     
     def answer_with_data(self, question):
-        self.db = Chroma(persist_directory="./.chroma_db", embedding_function=self.embedding_function)
         docs = self.db.similarity_search(question)
         context = docs[0].page_content
 
@@ -76,5 +76,6 @@ class rag:
         
         return ans
     
+
 
 
