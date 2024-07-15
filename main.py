@@ -1,9 +1,7 @@
 from fastapi import FastAPI, File, UploadFile
 from utils import rag
-from langchain_community.document_loaders import PyPDFLoader
-import uvicorn
 import os
-
+db_path = "./.chroma_db"
 app = FastAPI()
 
 rag = rag()
@@ -15,17 +13,19 @@ def root():
 
 @app.post("/upload_file")
 async def upload_file(file: UploadFile = File(...)):
-    UPLOAD_DIR = "./.chroma_db/originals/" + file.content_type.split('/')[1]
+    UPLOAD_DIR = "./originals/" + file.content_type.split('/')[1] # store original files ex) ./originals/pdf
     content = await file.read()
     with open(os.path.join(UPLOAD_DIR, file.filename), "wb") as fp:
-        fp.write(content)  # 서버 로컬 스토리지에 이미지 저장 (쓰기)
+        fp.write(content)  # store the file in the storage
+    
+    rag.store_data() # automatically vectorize the file into the database
     
     return {
         "content_type": file.content_type,
         "filename": file.filename
     }
 
-@app.get("/vectorize_db")
+@app.get("/vectorize_db") # execute vectorize db
 def vectorize_db():
     try:
         rag.store_data()
@@ -35,7 +35,7 @@ def vectorize_db():
     return {"message": "Success"}
 
 
-@app.get("/llama_answer")
+@app.get("/llama_answer") 
 def llama_answer(question: str):
     try:
         return_answer = rag.answer_without_data(question=question)
@@ -48,7 +48,7 @@ def llama_answer(question: str):
 @app.get("/rag_answer")
 def rag_answer(question: str):
     try:
-        return_answer = rag.answer_with_data(question=question)
-        return {"message": "Success", "answer": return_answer}
+        return_answer, evidence = rag.answer_with_data(question=question)
+        return {"message": "Success", "answer": return_answer, "evidence": evidence}
     except:
         return {"message": "Fail", "answer": ""}

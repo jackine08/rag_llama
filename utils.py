@@ -4,7 +4,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
-
+import os
 
 class rag:
     def __init__(self, model_id="MLP-KTLim/llama-3-Korean-Bllossom-8B"):
@@ -21,14 +21,15 @@ class rag:
         self.db = Chroma(persist_directory="./.chroma_db", embedding_function=self.embedding_function)
 
     
-    def store_data(self, data):
-        loader = PyPDFLoader("introduction-to-quantum-mechanics-david-j-darrell--annas-archive--libgenrs-nf-2695391.pdf")
-        pages = loader.load_and_split()
-        # split it into chunks
-        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-        docs = text_splitter.split_documents(pages)
-        Chroma.from_documents(docs, self.embedding_function, persist_directory="./.chroma_db")
-        
+    def store_data(self):
+        path = "./originals/pdf/"
+        for name in os.listdir(path=path):
+            loader = PyPDFLoader(os.path.join(path, name))
+            pages = loader.load_and_split()
+            # split it into chunks
+            text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+            docs = text_splitter.split_documents(pages)
+            Chroma.from_documents(docs, self.embedding_function, persist_directory="./.chroma_db")
         return True
     
     def answer_llm(self, user_prompt, system_prompt="You are an helpful assistant"):
@@ -66,6 +67,7 @@ class rag:
         return ans
     
     def answer_with_data(self, question):
+        
         docs = self.db.similarity_search(question)
         context = docs[0].page_content
 
@@ -74,8 +76,9 @@ class rag:
         
         ans = self.answer_llm(user_prompt=user_prompt, system_prompt=system_prompt)
         
-        return ans
+        return ans, docs[0]
     
+
 
 
 
