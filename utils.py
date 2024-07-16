@@ -20,6 +20,8 @@ class rag:
         self.embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
         self.db = Chroma(persist_directory="./.chroma_db", embedding_function=self.embedding_function)
 
+        with open("./prompt/system_prompt.txt", 'r') as f:
+            self.system_prompt = f.read()
     
     def store_data(self):
         path = "./originals/pdf/"
@@ -71,10 +73,9 @@ class rag:
         docs = self.db.similarity_search(question)
         context = docs[0].page_content + "\n" + docs[1].page_content
 
-        system_prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use five sentences maximum and keep the answer concise."
         user_prompt = "\nQuestion: " + question + "\nContext: " + context +  "\nAnswer:"
         
-        ans = self.answer_llm(user_prompt=user_prompt, system_prompt=system_prompt)
+        ans = self.answer_llm(user_prompt=user_prompt, system_prompt=self.system_prompt)
         
         return ans, docs[0:2]
     
