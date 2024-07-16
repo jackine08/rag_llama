@@ -1,5 +1,6 @@
 .chroma_db
 originals
+frontend
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
