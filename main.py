@@ -1,7 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from utils import rag
 import os
-import uvicorn
 from fastapi.responses import JSONResponse
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
@@ -61,7 +60,6 @@ def llama_answer(question: str):
         return {"message": "Success", "answer": return_answer}
     except:
         return {"message": "Fail", "answer": ""}
-
 
 
 @app.get("/rag_answer")
