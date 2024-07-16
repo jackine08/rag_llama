@@ -71,6 +71,3 @@ def rag_answer(question: str):
         return {"message": "Success", "answer": return_answer, "evidence": evidence}
     except:
         return {"message": "Fail", "answer": ""}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)

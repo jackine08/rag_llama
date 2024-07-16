@@ -29,7 +29,7 @@ class rag:
             # split it into chunks
             text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
             docs = text_splitter.split_documents(pages)
-            Chroma.from_documents(docs, self.embedding_function, persist_directory="./.chroma_db")
+            self.db.add_documents(docs)
         return True
     
     def answer_llm(self, user_prompt, system_prompt="You are an helpful assistant"):
@@ -69,14 +69,14 @@ class rag:
     def answer_with_data(self, question):
         
         docs = self.db.similarity_search(question)
-        context = docs[0].page_content
+        context = docs[0].page_content + "\n" + docs[1].page_content
 
         system_prompt = "You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use five sentences maximum and keep the answer concise."
         user_prompt = "\nQuestion: " + question + "\nContext: " + context +  "\nAnswer:"
         
         ans = self.answer_llm(user_prompt=user_prompt, system_prompt=system_prompt)
         
-        return ans, docs[0]
+        return ans, docs[0:2]
     
 
 
