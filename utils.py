@@ -7,7 +7,7 @@ from langchain_community.embeddings.sentence_transformer import SentenceTransfor
 import os
 
 class rag:
-    def __init__(self, model_id="MLP-KTLim/llama-3-Korean-Bllossom-8B"):
+    def __init__(self, model_id="MLP-KTLim/llama-3-Korean-Bllossom-8B", embedding_model_id="all-MiniLM-L6-v2"):
         self.device = "cuda:1" if torch.cuda.is_available() else "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.model = AutoModelForCausalLM.from_pretrained(
@@ -17,7 +17,7 @@ class rag:
             low_cpu_mem_usage=True
         ).to(self.device)
 
-        self.embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embedding_function = SentenceTransformerEmbeddings(model_name=embedding_model_id)
         self.db = Chroma(persist_directory="./.chroma_db", embedding_function=self.embedding_function)
 
         with open("./prompt/system_prompt.txt", 'r') as f:
@@ -71,13 +71,13 @@ class rag:
     def answer_with_data(self, question):
         
         docs = self.db.similarity_search(question)
-        context = docs[0].page_content + "\n" + docs[1].page_content
+        context = '\n'.join([docs[i].page_content for i in range(len(docs))])
 
         user_prompt = "\nQuestion: " + question + "\nContext: " + context +  "\nAnswer:"
         
         ans = self.answer_llm(user_prompt=user_prompt, system_prompt=self.system_prompt)
         
-        return ans, docs[0:2]
+        return ans, docs
     
 
 
